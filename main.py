@@ -7,6 +7,7 @@ FPS = 30
 fpsClock = pygame.time.Clock()
 screen = pygame.display.set_mode([700, 700])
 
+
 # Adds single frames to animation list
 def addFrames(animation, path):
     spriteSheet = pygame.image.load(path)
@@ -28,23 +29,37 @@ class Pet:
         self.eatAnimation = []
         self.illAnimation = []
         self.healAnimation = []
+        self.sadAnimation = []
+        self.deathAnimation = []
         self.currentAnimation = "idle"
-        self.poo = pygame.image.load("poop.png")
         self.pooCounter = 0
-        self.pooCoordinates = [(600,400), (30,300), (500,160)]
+        self.pooCoordinates = [(600,400), (30,300), (500,200)]
         self.energy = 100
         self.food = 100
         self.happiness = 100
         self.hygiene = 100
         self.health = 100
+        self.sad = 0
+        self.ill = 0
         self.death = 0
         self.animationFrame = 0
-        addFrames(self.idleAnimation,"idle.png")
+        self.poo = pygame.image.load("poop.png")
+        self.illness = pygame.image.load("ill.png")
+        addFrames(self.idleAnimation,"idle_anim.png")
+        addFrames(self.cleanAnimation, "clean_anim.png")
+        addFrames(self.deathAnimation, "death_anim.png")
+        addFrames(self.healAnimation, "heal_anim.png")
 
     # Executes current animation
     def animate(self):
         if self.currentAnimation == "idle":
-            self.idle()
+            self.animationLoop(self.idleAnimation)
+        if self.currentAnimation == "clean":
+            self.clean()
+        if self.currentAnimation == "death":
+            self.animationLoop(self.deathAnimation)
+        if self.currentAnimation == "heal":
+            self.healing()
 
 
     # Displays poop on the screen
@@ -54,13 +69,42 @@ class Pet:
             pygame.display.update(self.pooCoordinates[self.pooCounter], (80, 80))
             self.pooCounter += 1
 
-    # Draws idle animation
-    def idle(self):
-        if self.animationFrame >= len(self.idleAnimation):
+    # Draws healing animation
+    def healing(self):
+        self.frameDrawing(self.healAnimation)
+        if self.animationFrame >= len(self.healAnimation):
+            self.ill = 0
+            self.health = 100
             self.animationFrame = 0
+            self.currentAnimation = "idle"
+            pygame.draw.rect(screen, (255, 255, 255), (80, 200, 120, 120))
+            pygame.display.update((80, 200), (120, 120))
 
-        pygame.draw.rect(screen, (255,255,255), (200, 200, 300, 300))
-        screen.blit(self.idleAnimation[self.animationFrame], (200, 200))
+    # Draws clean animation
+    def clean(self):
+        self.frameDrawing(self.cleanAnimation)
+        if self.animationFrame >= len(self.cleanAnimation):
+            pygame.draw.rect(screen, (255, 255, 255), (600, 400, 80, 80))
+            pygame.draw.rect(screen, (255, 255, 255), (30, 300, 80, 80))
+            pygame.draw.rect(screen, (255, 255, 255), (500, 200, 80, 80))
+            pygame.display.update((600, 400, 80, 80))
+            pygame.display.update((30, 300, 80, 80))
+            pygame.display.update((500, 200, 80, 80))
+            self.pooCounter = 0
+            self.hygiene = 100
+            self.animationFrame = 0
+            self.currentAnimation = "idle"
+
+    # Draws animation in a loop
+    def animationLoop(self, animation):
+        if self.animationFrame >= len(animation):
+            self.animationFrame = 0
+        self.frameDrawing(animation)
+
+    # Draws single frame of animation
+    def frameDrawing(self, animation):
+        pygame.draw.rect(screen, (255, 255, 255), (200, 200, 300, 300))
+        screen.blit(animation[self.animationFrame], (200, 200))
         pygame.display.update(pygame.Rect(200, 200, 300, 300))
         self.animationFrame += 1
 
@@ -68,7 +112,8 @@ class Pet:
 # MENU CLASS -------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------
 class Menu:
-    def __init__(self):
+    def __init__(self, tamagotchi):
+        self.tamagotchi = tamagotchi
         self.sleep = pygame.image.load("sleep.png")
         self.eat = pygame.image.load("eat.png")
         self.play = pygame.image.load("play.png")
@@ -77,30 +122,45 @@ class Menu:
         self.reset = pygame.image.load("reset.png")
 
     def displayButtons(self):
-        screen.blit(self.sleep, (62,0))
-        pygame.display.update((62,0), (150, 150))
+        screen.blit(self.sleep, (100,0))
+        pygame.display.update((100,0), (100, 100))
 
-        screen.blit(self.eat, (274, 0))
-        pygame.display.update((274, 0), (150, 150))
+        screen.blit(self.eat, (300, 0))
+        pygame.display.update((300, 0), (100, 100))
 
-        screen.blit(self.play, (486, 0))
-        pygame.display.update((486, 0), (150, 150))
+        screen.blit(self.play, (500, 0))
+        pygame.display.update((500, 0), (100, 100))
 
-        screen.blit(self.clean, (62, 550))
-        pygame.display.update((62, 550), (150, 150))
+        screen.blit(self.clean, (100, 600))
+        pygame.display.update((100, 600), (100, 100))
 
-        screen.blit(self.heal, (274, 550))
-        pygame.display.update((274, 550), (150, 150))
+        screen.blit(self.heal, (300, 600))
+        pygame.display.update((300, 600), (100, 100))
 
-        screen.blit(self.reset, (486, 550))
-        pygame.display.update((486, 550), (150, 150))
+        screen.blit(self.reset, (500, 600))
+        pygame.display.update((500, 600), (100, 100))
 
-    def handleMouse(self, position):
-        print(position)
-
-
-
-
+    def handleMouse(self, x, y):
+        if self.tamagotchi.death == 0:
+            # sleep
+            if ((100 <= x <= 200) and (0 <= y <= 100)):
+              print("sleep")
+            # eat
+            elif ((300 <= x <= 400) and (0 <= y <= 100)):
+               print("eat")
+            # play
+            elif ((500 <= x <= 600) and (0 <= y <= 100)):
+               print("play")
+            # clean
+            elif ((100 <= x <= 200) and (600 <= y <= 700)):
+                if self.tamagotchi.pooCounter > 0:
+                    self.tamagotchi.animationFrame = 0
+                    self.tamagotchi.currentAnimation = "clean"
+            # heal
+            elif ((300 <= x <= 400) and (600 <= y <= 700)):
+                if self.tamagotchi.ill == 1:
+                    self.tamagotchi.animationFrame = 0
+                    self.tamagotchi.currentAnimation = "heal"
 
 
 
@@ -111,7 +171,7 @@ class Menu:
 def main():
     pygame.init()
     tamagotchi = Pet()
-    menu = Menu()
+    menu = Menu(tamagotchi)
     frameCount = 0
 
     screen.fill((255, 255, 255))
@@ -120,7 +180,7 @@ def main():
 
     running = True
 
-    # GAME LOOP
+# GAME LOOP
     while running:
 
     # EVENTS HANDLING
@@ -128,28 +188,58 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                menu.handleMouse(event.pos)
+                x, y = event.pos
+
+            # reset
+                if ((500 <= x <= 600) and (600 <= y <= 700)):
+                    pygame.draw.rect(screen, (255, 255, 255), (0, 100, 700, 500))
+                    tamagotchi = Pet()
+                    menu.tamagotchi = tamagotchi
+
+                menu.handleMouse(x,y)
 
 
     # POOPING
-        if frameCount % 300 == 299:
+        if frameCount % 1000 == 999:
           rand = random.randint(0, 1)
-          print(rand)
+          #print(rand)
           if rand == 1:
             tamagotchi.poop()
 
     # LOWERING HYGIENE
         if tamagotchi.pooCounter > 0:
             if frameCount % 50 == 0:
-                tamagotchi.hygiene -= 1 * tamagotchi.pooCounter
-                print(tamagotchi.hygiene)
+                if tamagotchi.hygiene < 30:
+                    tamagotchi.ill = 1
 
+                if tamagotchi.hygiene <= 0:
+                    tamagotchi.hygiene = 0
+                else:
+                    tamagotchi.hygiene -= 1 * tamagotchi.pooCounter
 
+                print("Hygiene ", tamagotchi.hygiene)
 
+    # ILLNESS
+        if tamagotchi.ill == 1:
+            screen.blit(tamagotchi.illness, (80,200))
+            pygame.display.update((80,200), (120, 120))
+            if frameCount % 50 == 0:
+                tamagotchi.health -= 1
+                print("Health ", tamagotchi.health)
+    # HEALTH
+        if tamagotchi.health < 0:
+            tamagotchi.health = 0
 
+    # DEATH
+        if tamagotchi.health <= 0:
+            if tamagotchi.death == 0:
+                tamagotchi.animationFrame = 0
+                tamagotchi.currentAnimation = "death"
+                tamagotchi.death = 1
+                print("DEATH")
 
     # DISPLAYING TAMAGOTCHI ANIMATIONS
-        if frameCount % 30 == 0:
+        if frameCount % 20 == 0:
             tamagotchi.animate()
 
         frameCount += 1
