@@ -3,12 +3,14 @@
 import pygame
 import random
 
+
+
 FPS = 30
 fpsClock = pygame.time.Clock()
 screen = pygame.display.set_mode([700, 700])
 
 
-# Adds single frames to animation list
+    # Adds single frames to animation list
 def addFrames(animation, path):
     spriteSheet = pygame.image.load(path)
     size = spriteSheet.get_rect().size
@@ -27,7 +29,7 @@ class Pet:
         self.sleepAnimation = []
         self.cleanAnimation = []
         self.eatAnimation = []
-        self.illAnimation = []
+        self.playAnimation = []
         self.healAnimation = []
         self.sadAnimation = []
         self.deathAnimation = []
@@ -49,17 +51,30 @@ class Pet:
         addFrames(self.cleanAnimation, "clean_anim.png")
         addFrames(self.deathAnimation, "death_anim.png")
         addFrames(self.healAnimation, "heal_anim.png")
+        addFrames(self.eatAnimation, "eat_anim.png")
+        addFrames(self.sleepAnimation, "sleep_anim.png")
+        addFrames(self.sadAnimation, "sad_anim.png")
+        addFrames(self.playAnimation, "play_anim.png")
+
 
     # Executes current animation
     def animate(self):
-        if self.currentAnimation == "idle":
+        if self.currentAnimation == "idle" and self.happiness > 40:
             self.animationLoop(self.idleAnimation)
+        if self.currentAnimation == "idle" and self.happiness <= 40:
+            self.animationLoop(self.sadAnimation)
         if self.currentAnimation == "clean":
             self.clean()
         if self.currentAnimation == "death":
             self.animationLoop(self.deathAnimation)
         if self.currentAnimation == "heal":
             self.healing()
+        if self.currentAnimation == "eat":
+            self.eat()
+        if self.currentAnimation == "sleep":
+            self.sleep()
+        if self.currentAnimation == "play":
+            self.play()
 
 
     # Displays poop on the screen
@@ -68,6 +83,7 @@ class Pet:
             screen.blit(self.poo, self.pooCoordinates[self.pooCounter])
             pygame.display.update(self.pooCoordinates[self.pooCounter], (80, 80))
             self.pooCounter += 1
+
 
     # Draws healing animation
     def healing(self):
@@ -94,6 +110,37 @@ class Pet:
             self.hygiene = 100
             self.animationFrame = 0
             self.currentAnimation = "idle"
+
+    # Draws eat animation
+    def eat(self):
+        self.frameDrawing(self.eatAnimation)
+        if self.animationFrame >= len(self.eatAnimation):
+            self.food = 100
+            self.animationFrame = 0
+            self.currentAnimation = "idle"
+
+    # Draws sleep animation
+    def sleep(self):
+        self.frameDrawing(self.sleepAnimation)
+        if self.animationFrame >= len(self.sleepAnimation):
+            self.energy+=10
+            if self.energy > 100:
+                self.energy = 100
+            self.animationFrame = 0
+        if self.energy >= 100:
+            self.currentAnimation = "idle"
+
+    # Draws play animation
+    def play(self):
+        self.frameDrawing(self.playAnimation)
+        if self.animationFrame >= len(self.playAnimation):
+            self.happiness = 100
+            self.energy -= 25
+            if self.energy < 0:
+                self.energy = 0
+            self.animationFrame = 0
+            self.currentAnimation = "idle"
+
 
     # Draws animation in a loop
     def animationLoop(self, animation):
@@ -144,13 +191,19 @@ class Menu:
         if self.tamagotchi.death == 0:
             # sleep
             if ((100 <= x <= 200) and (0 <= y <= 100)):
-              print("sleep")
+              if self.tamagotchi.energy < 100:
+                  self.tamagotchi.animationFrame = 0
+                  self.tamagotchi.currentAnimation = "sleep"
             # eat
             elif ((300 <= x <= 400) and (0 <= y <= 100)):
-               print("eat")
+               if self.tamagotchi.food < 100:
+                   self.tamagotchi.animationFrame = 0
+                   self.tamagotchi.currentAnimation = "eat"
             # play
             elif ((500 <= x <= 600) and (0 <= y <= 100)):
-               print("play")
+               if self.tamagotchi.energy > 0:
+                   self.tamagotchi.animationFrame = 0
+                   self.tamagotchi.currentAnimation = "play"
             # clean
             elif ((100 <= x <= 200) and (600 <= y <= 700)):
                 if self.tamagotchi.pooCounter > 0:
@@ -201,8 +254,7 @@ def main():
 
     # POOPING
         if frameCount % 1000 == 999:
-          rand = random.randint(0, 1)
-          #print(rand)
+          rand = random.randint(0, 2)
           if rand == 1:
             tamagotchi.poop()
 
@@ -217,15 +269,33 @@ def main():
                 else:
                     tamagotchi.hygiene -= 1 * tamagotchi.pooCounter
 
-                print("Hygiene ", tamagotchi.hygiene)
+
+
+    #HUNGER (LOWERING FOOD)
+        if frameCount % 70 == 0:
+            if(tamagotchi.food > 0):
+                tamagotchi.food -= 1
+            else:
+                tamagotchi.food = 0
+
+            if(tamagotchi.food < 20):
+                tamagotchi.health -= 1
+
+
+    # BOREDOM (LOWERING HAPPINESS)
+        if frameCount % 80 == 0:
+            if tamagotchi.happiness > 0:
+                tamagotchi.happiness -= 1
+            else:
+                tamagotchi.happiness = 0
 
     # ILLNESS
         if tamagotchi.ill == 1:
             screen.blit(tamagotchi.illness, (80,200))
             pygame.display.update((80,200), (120, 120))
-            if frameCount % 50 == 0:
+            if frameCount % 100 == 0:
                 tamagotchi.health -= 1
-                print("Health ", tamagotchi.health)
+
     # HEALTH
         if tamagotchi.health < 0:
             tamagotchi.health = 0
@@ -236,11 +306,21 @@ def main():
                 tamagotchi.animationFrame = 0
                 tamagotchi.currentAnimation = "death"
                 tamagotchi.death = 1
-                print("DEATH")
+
 
     # DISPLAYING TAMAGOTCHI ANIMATIONS
         if frameCount % 20 == 0:
+            print("energy:"+str(tamagotchi.energy))
+            print("food:"+str(tamagotchi.food))
+            print("happiness:"+str(tamagotchi.happiness))
+            print("hygiene:"+str(tamagotchi.hygiene))
+            print("health:"+str(tamagotchi.health))
+            print("sad:"+str(tamagotchi.sad))
+            print("ill:"+str(tamagotchi.ill))
+            print("death:"+str(tamagotchi.death))
             tamagotchi.animate()
+
+
 
         frameCount += 1
         fpsClock.tick(FPS)
