@@ -1,2 +1,2 @@
 # tamagotchi
-Projekt PJF
+Python Project
