@@ -62,7 +62,7 @@ def main():
 
 
 
-    #HUNGER (LOWERING FOOD)
+    # HUNGER (LOWERING FOOD)
         if frameCount % 70 == 0:
             if(tamagotchi.food > 0):
                 tamagotchi.food -= 1
